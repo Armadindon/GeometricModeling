@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
-class Segment
+public class Segment
 {
     public Vector3 p1 { get; set; }
     public Vector3 p2 { get; set; }

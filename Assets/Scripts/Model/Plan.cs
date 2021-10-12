@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-class Plan
+public class Plan
 {
     public Vector3 normal { get; set; }
     public float d { get; set; }
@@ -14,7 +14,7 @@ class Plan
     public Plan(Vector3 normal, Vector3 P) : this(normal, Vector3.Dot(P, normal))
     { }
 
-    public Plan(Vector3 P1, Vector3 P2, Vector3 P3) : this(Vector3.Cross(P2 - P1, P3-P1), Vector3.Dot(P1, Vector3.Cross(P2 - P1, P3 - P1)))
+    public Plan(Vector3 P1, Vector3 P2, Vector3 P3) : this(Vector3.Cross(P2 - P1, P3 - P1).normalized, Vector3.Dot(P1, Vector3.Cross(P2 - P1, P3 - P1).normalized))
     { }
 
     public static bool inntersectSegmentplane(Segment seg, Plan plan, out Vector3 interPt, out Vector3 interNormal)
