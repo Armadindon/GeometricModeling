@@ -12,6 +12,8 @@ public class GameManager : MonoBehaviour
     private SegmentBehaviour segment;
     [SerializeField]
     private PlanBehaviour plan;
+    [SerializeField]
+    private SphereBehaviour sphere;
 
 
     private GameObject intersectionGameObject;
@@ -23,7 +25,8 @@ public class GameManager : MonoBehaviour
 
         Vector3 interPt;
         Vector3 interNormal;
-        bool result = Plan.inntersectSegmentplane(segment.segment, plan.plan, out interPt, out interNormal);
+        //bool result = Plan.inntersectSegmentplane(segment.segment, plan.plan, out interPt, out interNormal);
+        bool result = Sphere.InterSegmentSphere(segment.segment, sphere.sphere, out interPt, out interNormal);
         if (result) intersectionGameObject = Instantiate(planInterPoint, interPt, Quaternion.identity);
     }
 }
