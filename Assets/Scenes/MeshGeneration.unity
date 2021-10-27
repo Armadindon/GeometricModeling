@@ -365,15 +365,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f99c13254ddf19f4d8c1655fc879f338, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_DisplayEdges: 0
-  m_NMaxEdges: 0
+  m_DisplayEdges: 1
+  m_NMaxEdges: 100
   m_DisplayNormals: 0
   m_NMaxNormals: 0
   m_NormalScaleFactor: 0
-  m_DisplayVertices: 0
-  m_NMaxVertices: 0
+  m_DisplayVertices: 1
+  m_NMaxVertices: 100
   m_DisplayFaces: 0
-  m_NMaxFaces: 0
+  m_NMaxFaces: 100
 --- !u!23 &1398956718
 MeshRenderer:
   m_ObjectHideFlags: 0
