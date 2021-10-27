@@ -16,8 +16,8 @@ public class MeshGenerator : MonoBehaviour
         //Plane
         //m_mf.sharedMesh = WrapNormalizedPlane(100, 100, (kx, ky) => new Vector3(kx, 0, ky));
 
-        // PolygonRegulier
-        m_mf.sharedMesh = CreateRegularPolygonXZQuads(5f, 10);
+        // Polygone Regulier
+        m_mf.sharedMesh = CreateRegularPolygonXZQuads(5f, 9);
         Debug.Log(MeshDisplayInfo.ExportMeshCSV(m_mf.sharedMesh));
     }
 
@@ -247,30 +247,28 @@ public class MeshGenerator : MonoBehaviour
         Mesh newMesh = new Mesh();
         newMesh.name = "RegularPolygonQuads";
 
-        Vector3[] vertices = new Vector3[nQuads * 3 + 1];
+        Vector3[] vertices = new Vector3[nQuads * 2 + 1];
         int[] quads = new int[nQuads * 4];
 
         //On met en place le centre
         vertices[0] = Vector3.zero;
 
-
-
         //Vertices
-        for (int i = 1; i < vertices.Length / 3; i++)
+        for (int i = 0; i < nQuads; i++)
         {
-            Vector3 centerVertice = new Vector3(Mathf.Sin(i/nQuads*2*Mathf.PI) * radius,0, Mathf.Cos(i / nQuads * 2 * Mathf.PI) * radius).normalized;
-            Vector3 leftVertice = new Vector3(Mathf.Sin((i - 1) / nQuads * 2 * Mathf.PI) * radius, 0, Mathf.Cos((i - 1) / nQuads * 2 * Mathf.PI) * radius).normalized;
-            Vector3 rightVertice = new Vector3(Mathf.Sin((i + 1) / nQuads * 2 * Mathf.PI) * radius, 0, Mathf.Cos((i + 1) / nQuads * 2 * Mathf.PI) * radius).normalized;
+            float x = radius * Mathf.Sin((2 * Mathf.PI * i) / nQuads);
+            float z = radius * Mathf.Cos((2 * Mathf.PI * i) / nQuads);
+            Vector3 centerVertice = new Vector3(x, 0,z);
+            x = radius * Mathf.Sin((2 * Mathf.PI * (i + 1)) / nQuads);
+            z = radius * Mathf.Cos((2 * Mathf.PI * (i + 1)) / nQuads);
+            Vector3 nextVertice = new Vector3(x, 0, z);
 
-            //On calcule les points entre centerVertice et les autres
-            Vector3 midLeft = (centerVertice + leftVertice).normalized;
-            Vector3 midRight = (centerVertice + rightVertice).normalized;
+            //On calcule les points entre centerVertice et la prochaine vertice
+            Vector3 midNextVertice = Vector3.Lerp(centerVertice, nextVertice, .5f);
 
             //On les ajoute à la liste
-            vertices[i] = midLeft;
-            vertices[i + 1] = centerVertice;
-            vertices[i + 2] = midRight;
-
+            vertices[i * 2 + 1] = centerVertice;
+            vertices[i * 2 + 2] = midNextVertice;
         }
 
         //Quads
@@ -278,9 +276,10 @@ public class MeshGenerator : MonoBehaviour
         for (int i = 0; i < nQuads; i++)
         {
             quads[index++] = 0; //On met le premier au centre
-            quads[index++] = i*3;
-            quads[index++] = i*3 + 1; 
-            quads[index++] = i * 3 + 2;
+            quads[index++] = (i == 0)?nQuads*2:2*i; // ???
+            quads[index++] = i * 2 + 1;
+            quads[index++] = i * 2 + 2; 
+            
         }
 
         newMesh.vertices = vertices;
