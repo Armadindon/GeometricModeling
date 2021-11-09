@@ -22,6 +22,7 @@ public class MeshGenerator : MonoBehaviour
         m_mf.sharedMesh = mMesh;
         Debug.Log(MeshDisplayInfo.ExportMeshCSV(m_mf.sharedMesh));
         List<HalfEdge> convert = HalfEdge.VertexFaceToHalfEdge(mMesh.vertices, mMesh.GetIndices(0));
+        Debug.Log(MeshDisplayInfo.ExportMeshCSV(convert));
     }
 
     private Mesh CreateTriangle()

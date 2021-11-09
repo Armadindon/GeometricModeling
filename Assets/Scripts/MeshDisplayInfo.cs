@@ -146,4 +146,19 @@ public class MeshDisplayInfo : MonoBehaviour
 
         return string.Join("\n", strings);
     }
+
+    public static string ExportMeshCSV(List<HalfEdge> mesh)
+    {
+        //VertexIndex   VertexPosX  VertexPosY  VertexPosZ  QuadIndex   QuadVertexIndex1    QuadVertexIndex2    QuadVertexIndex3    QuadVertexIndex4        List<string> strings = new List<string>();
+        List<string> strings = new List<string>();
+        strings.Add("HalfEdgeIndice\tSourcePosX\tSourcePosY\tSourcePosZ\tPrevEdgeIndice\tNextEdgeIndice\tTwinEdgeIndice\tFaceIndice");
+
+        for(int i = 0; i < mesh.Count; i++)
+        {
+            HalfEdge edge = mesh[i];
+            strings.Add($"{edge.index}\t{edge.sourceVertex.vertex.x}\t{edge.sourceVertex.vertex.y}\t{edge.sourceVertex.vertex.z}\t{edge.prevEdge.index}\t{edge.nextEdge.index}\t{edge.twinEdge.index}\t{edge.face.face.index}");
+        }
+
+        return string.Join("\n", strings);
+    }
 }
