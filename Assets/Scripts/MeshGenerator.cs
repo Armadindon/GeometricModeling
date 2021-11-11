@@ -8,6 +8,7 @@ public class MeshGenerator : MonoBehaviour
 {
     delegate Vector3 ComputeVector3FromKxKz(float kx, float kz);
     private MeshFilter m_mf;
+    private Mesh mMesh;
     // Start is called before the first frame update
     void Start()
     {
@@ -17,8 +18,11 @@ public class MeshGenerator : MonoBehaviour
         //m_mf.sharedMesh = WrapNormalizedPlane(100, 100, (kx, ky) => new Vector3(kx, 0, ky));
 
         // Polygone Regulier
-        m_mf.sharedMesh = CreateRegularPolygonXZQuads(5f, 9);
+        mMesh = CreateRegularPolygonXZQuads(5f, 9);
+        m_mf.sharedMesh = mMesh;
         Debug.Log(MeshDisplayInfo.ExportMeshCSV(m_mf.sharedMesh));
+        List<HalfEdge> convert = HalfEdge.VertexFaceToHalfEdge(mMesh.vertices, mMesh.GetIndices(0));
+        Debug.Log(MeshDisplayInfo.ExportMeshCSV(convert));
     }
 
     private Mesh CreateTriangle()
@@ -287,7 +291,6 @@ public class MeshGenerator : MonoBehaviour
         newMesh.RecalculateBounds();
         newMesh.RecalculateNormals();
         return newMesh;
-
     }
 
     // Update is called once per frame
