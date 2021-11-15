@@ -53,6 +53,8 @@ public class HalfEdge
             p3.nextEdge = p4;
             p1.prevEdge = p4;
 
+            //TODO: Les TwinEdge se basent sur la face connexe
+            //Corriger ici
             //On génère les twin edge
             HalfEdge t1 = new HalfEdge(index++, v2, null, null, p1, face);
             HalfEdge t2 = new HalfEdge(index++, v3, null, t1, p2, face);
