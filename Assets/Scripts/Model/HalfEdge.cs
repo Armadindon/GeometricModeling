@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class HalfEdge
@@ -82,4 +83,54 @@ public class HalfEdge
 
         return result;
     }
+
+    private static List<Face> extractFaces(List<HalfEdge> edges)
+    {
+        return edges.Select(x => x.face).Distinct().ToList();
+    }
+
+    public static Mesh HalfEdgeToMesh(List<HalfEdge> edges)
+    {
+        Mesh newMesh = new Mesh();
+        newMesh.name = "HalfEdgeConversion";
+        List<Vector3> vertices = new List<Vector3>();
+        List<int> quads = new List<int>();
+
+        List<Face> faces = extractFaces(edges);
+
+        int index = 0;
+
+        foreach(Face f in faces){
+
+            HalfEdge edge1 = f.face;
+            HalfEdge edge2 = edge1.nextEdge;
+            HalfEdge edge3 = edge1.nextEdge.nextEdge;
+            HalfEdge edge4 = edge1.prevEdge;
+
+            Vector3 vertex1 = edge1.sourceVertex.vertex;
+            Vector3 vertex2 = edge2.sourceVertex.vertex;
+            Vector3 vertex3 = edge3.sourceVertex.vertex;
+            Vector3 vertex4 = edge4.sourceVertex.vertex;
+
+            quads.Add(vertices.Contains(vertex1)?vertices.IndexOf(vertex1): index++);
+            if (!vertices.Contains(vertex1)) vertices.Add(vertex1);
+
+            quads.Add(vertices.Contains(vertex2) ? vertices.IndexOf(vertex2) : index++);
+            if (!vertices.Contains(vertex2)) vertices.Add(vertex2);
+
+            quads.Add(vertices.Contains(vertex3) ? vertices.IndexOf(vertex3) : index++);
+            if (!vertices.Contains(vertex3)) vertices.Add(vertex3);
+
+            quads.Add(vertices.Contains(vertex4) ? vertices.IndexOf(vertex4) : index++);
+            if (!vertices.Contains(vertex4)) vertices.Add(vertex4);
+        }
+
+        newMesh.vertices = vertices.ToArray();
+        newMesh.SetIndices(quads.ToArray(), MeshTopology.Quads, 0);
+        newMesh.RecalculateBounds();
+        newMesh.RecalculateNormals();
+
+        return newMesh;
+    }
+
 }
