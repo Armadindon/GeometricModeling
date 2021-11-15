@@ -18,7 +18,7 @@ public class MeshGenerator : MonoBehaviour
         //m_mf.sharedMesh = WrapNormalizedPlane(100, 100, (kx, ky) => new Vector3(kx, 0, ky));
 
         // Polygone Regulier
-        mMesh = CreateRegularPolygonXZQuads(5f, 9);
+        mMesh = CreateRegularPolygonXZQuads(5f,8);
         m_mf.sharedMesh = mMesh;
         Debug.Log(MeshDisplayInfo.ExportMeshCSV(m_mf.sharedMesh));
 
