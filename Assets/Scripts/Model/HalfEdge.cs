@@ -107,6 +107,11 @@ public class HalfEdge
         return edges.Select(x => x.face).Distinct().ToList();
     }
 
+    private static List<HalfEdge> FindAllEdgeUsingVertice(List<HalfEdge> edges, Vertex v)
+    {
+        return edges.Where<HalfEdge>(x => (x.sourceVertex == v) && (x.nextEdge.sourceVertex == v)).ToList();
+    }
+
     public static Mesh HalfEdgeToMesh(List<HalfEdge> edges)
     {
         Mesh newMesh = new Mesh();
@@ -149,6 +154,57 @@ public class HalfEdge
         newMesh.RecalculateNormals();
 
         return newMesh;
+    }
+
+
+    public static Vector3 FaceAverage(Face f)
+    {
+        Vector3 avg = new Vector3();
+
+        HalfEdge current = f.face;
+        avg += current.sourceVertex.vertex;
+        while (current != f.face)
+        {
+            avg += current.sourceVertex.vertex;
+            current = current.nextEdge;
+        }
+
+        return avg / 4;
+    }
+
+    public static void Catmull_Clark(List<HalfEdge> mesh)
+    {
+        //On récupère toute les faces
+        List<Face> faces = extractFaces(mesh);
+        Dictionary<Face, Vertex> facePoints = new Dictionary<Face, Vertex>();
+
+        //On calcule les Face points pour chaque Face
+        for (int i = 0; i < faces.Count; i++) facePoints[faces[i]] = new Vertex(FaceAverage(faces[i]));
+
+        for (int i = 0; i < faces.Count; i++)
+        {
+
+            // On parcours les Edge et on crée les edgePoints
+
+            // On met à jour la position des verticles avec les VertexPoints
+
+            //On split l'Edge avec l'edgePoint comme paramètre
+
+            // On split la face, avec le facepoint comme paramètre
+
+        }
+    }
+
+    public static void SplitFace(Face f, Vertex v)
+    {
+        HalfEdge current = f.face;
+        //On calcule le Edge point
+        
+    }
+
+    public static void SplitEdge(HalfEdge e, Vertex v)
+    {
+        
     }
 
 }
