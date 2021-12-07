@@ -9,28 +9,26 @@ class HalfEdgeMesh
 {
     public List<HalfEdge> edges;
     public List<Vertex> vertices;
+    public List<Face> faces;
 
     public HalfEdgeMesh()
     {
         edges = new List<HalfEdge>();
         vertices = new List<Vertex>();
+        faces = new List<Face>();
     }
 
-    public HalfEdgeMesh(List<HalfEdge> edges, List<Vertex> vertices)
+    public HalfEdgeMesh(List<HalfEdge> edges, List<Vertex> vertices, List<Face> faces)
     {
         this.edges = edges;
         this.vertices = vertices;
+        this.faces = faces;
     }
 
-    #region
     /**
      * FONCTION UTILITAIRES
      * */
-    private List<Face> extractFaces()
-    {
-        return edges.Select(x => x.face).Distinct().ToList();
-    }
-
+    #region
     public List<HalfEdge> FindAllEdgeUsingVertice(Vertex v)
     {
         return edges.Where<HalfEdge>(x => (x.sourceVertex == v) && (x.nextEdge.sourceVertex == v)).ToList();
@@ -68,15 +66,17 @@ class HalfEdgeMesh
     }
     #endregion
 
-    #region
-    /**
+     /**
      * FONCTION DE CONVERSIONS
      * */
+    #region
     public static HalfEdgeMesh fromVertexFace(Vector3[] vertices, int[] faces)
     {
         int index = 0;
         int vertexIndice = 0;
+        int facesIndex = 0;
         List<HalfEdge> result = new List<HalfEdge>();
+        List<Face> facesList = new List<Face>();
         Dictionary<int, Vertex> verticesDict = new Dictionary<int, Vertex>();
         Dictionary<KeyValuePair<int, int>, HalfEdge> twin = new Dictionary<KeyValuePair<int, int>, HalfEdge>();
 
@@ -94,7 +94,8 @@ class HalfEdgeMesh
             }
             else v1 = new Vertex(vertexIndice++, vertices[faces[i++]]);
             HalfEdge p1 = new HalfEdge(index++, v1, null, null, null, null);
-            Face face = new Face(p1);
+            Face face = new Face(facesIndex++, p1);
+            facesList.Add(face);
             p1.face = face;
 
             int v2Index = faces[i];
@@ -172,7 +173,7 @@ class HalfEdgeMesh
             result.Add(p4);
         }
 
-        return new HalfEdgeMesh(result, verticesDict.Values.OrderBy(v => v.index).ToList());
+        return new HalfEdgeMesh(result, verticesDict.Values.OrderBy(v => v.index).ToList(), facesList);
     }
 
     //TODO: Re-Work to work with vertex indices
@@ -182,8 +183,6 @@ class HalfEdgeMesh
         newMesh.name = "HalfEdgeConversion";
         List<Vector3> vertices = new List<Vector3>();
         List<int> quads = new List<int>();
-
-        List<Face> faces = extractFaces();
 
         int index = 0;
 
@@ -223,20 +222,16 @@ class HalfEdgeMesh
     }
     #endregion
 
-    #region
     /**
      * CATMULL CLARK
      * */
-
+    #region
     public void Catmull_Clark()
     {
         Dictionary<Face, Vertex> facePoints = new Dictionary<Face, Vertex>();
         Dictionary<HalfEdge, Vertex> edgePoints = new Dictionary<HalfEdge, Vertex>();
 
         int vertexIndice = vertices.Count;
-
-        //On récupère toute les faces
-        List<Face> faces = extractFaces();
 
         //On calcule les Face points pour chaque Face
         for (int i = 0; i < faces.Count; i++) facePoints[faces[i]] = new Vertex(vertexIndice++, FaceAverage(faces[i]));
