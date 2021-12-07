@@ -22,9 +22,9 @@ public class MeshGenerator : MonoBehaviour
         m_mf.sharedMesh = mMesh;
         Debug.Log(MeshDisplayInfo.ExportMeshCSV(m_mf.sharedMesh));
 
-        List<HalfEdge> convert = HalfEdge.VertexFaceToHalfEdge(mMesh.vertices, mMesh.GetIndices(0));
-        Debug.Log(MeshDisplayInfo.ExportMeshCSV(convert));
-        m_mf.sharedMesh = HalfEdge.HalfEdgeToMesh(convert);
+        HalfEdgeMesh convert = HalfEdgeMesh.fromVertexFace(mMesh.vertices, mMesh.GetIndices(0));
+        Debug.Log(MeshDisplayInfo.ExportMeshCSV(convert.edges));
+        m_mf.sharedMesh = convert.ToMesh();
         Debug.Log(MeshDisplayInfo.ExportMeshCSV(m_mf.sharedMesh));
     }
 
