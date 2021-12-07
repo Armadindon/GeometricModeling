@@ -34,22 +34,22 @@ class HalfEdgeMesh
         return edges.Where<HalfEdge>(x => (x.sourceVertex == v) && (x.nextEdge.sourceVertex == v)).ToList();
     }
 
+
     public int computeValenceOfPoint(Vertex v)
     {
         List<HalfEdge> edgesUsingVertex = FindAllEdgeUsingVertice(v);
-        //On la transforme en liste de Pair
-        List<KeyValuePair<int, int>> edgesList = edgesUsingVertex
-            .Select<HalfEdge, KeyValuePair<int, int>>(e => {
-                //Afin d'éviter d'avoir les edge dans les deux sens, on dit toujours qu'un edge va de l'index min -> max
-                int minIndex = Mathf.Min(e.sourceVertex.index, e.nextEdge.sourceVertex.index);
-                int maxIndex = Mathf.Max(e.sourceVertex.index, e.nextEdge.sourceVertex.index);
-                return new KeyValuePair<int, int>(minIndex, maxIndex);
-            })
-            .Distinct()
-            .ToList();
-
+        List<HalfEdge> edgesList = filterTwinsFromList(edgesUsingVertex);
         return edgesList.Count;
     }
+
+    public static List<HalfEdge> filterTwinsFromList(List<HalfEdge> edges)
+    {
+        List<HalfEdge> copy = new List<HalfEdge>(edges);
+        for (int i = 0; i < edges.Count; i++) copy.Remove(edges[i].twinEdge);
+        return copy;
+    }
+
+
     public static Vector3 FaceAverage(Face f)
     {
         Vector3 avg = new Vector3();
@@ -63,6 +63,19 @@ class HalfEdgeMesh
         }
 
         return avg / 4;
+    }
+
+    public static int nbEdgeInFace(Face f)
+    {
+        int nb = 0;
+        HalfEdge edge = f.face;
+        do
+        {
+            nb++;
+            edge = edge.nextEdge;
+        } while(edge != f.face);
+
+        return nb;
     }
     #endregion
 
@@ -292,29 +305,68 @@ class HalfEdgeMesh
             } while (current != faces[i].face);
 
 
-
-            //On split l'Edge avec l'edgePoint comme paramètre
-
             // On split la face, avec le facepoint comme paramètre
-
+            
         }
+        
+        //Pour ne pas traiter les faces que l'on vient de créer
+        int initialFaceCount = faces.Count;
+
+        for (int i = 0; i < initialFaceCount; i++)
+        {
+            int nbEdge = nbEdgeInFace(faces[i]);
+            if ( nbEdge > 4 && nbEdge%2 == 0)
+            {
+                SplitFace(faces[i], facePoints[faces[i]]);
+            }
+        }
+
     }
 
     //TODO : A faire
     public static void SplitFace(Face f, Vertex v)
     {
-        HalfEdge current = f.face;
+        //On split la face
+        int newNbFace = nbEdgeInFace(f) / 2;
 
+        //TODO: J'écrit l'algo car pas le temps ce soir
+        // On récupère les 4 points originaux de la face (les pairs dans une liste)
+        // On connecte chaque nouveau vertex au face point (les impairs dans une liste)
+        // On set la face et on relie bien les points entre eux
+        // On adapte pour former les faces
     }
 
-    //TODO : Gérer le twinEdge
-    public static void SplitEdge(HalfEdge e, Vertex v)
+    public void SplitEdge(HalfEdge edge, Vertex v)
     {
         //On split l'edge
-        HalfEdge next = e.nextEdge;
-        //Aucune idée pour le twin + l'index
-        HalfEdge newEdge = new HalfEdge(0, v, e, next, null, e.face);
+        HalfEdge newTwinEdge = null, newEdge;
+
+        //On récupère les données
+        HalfEdge twin = edge.twinEdge;
+        HalfEdge next = edge.nextEdge;
+        HalfEdge twinNext = twin.nextEdge;
+
+        //On crée les nouveaux edges
+        newEdge = new HalfEdge(edges.Count, v, edge, next, twin, edge.face);
+        if (twin != null)
+        {
+            newTwinEdge = new HalfEdge(edges.Count + 1, v, twin, twinNext, edge, twin.face);
+        }
+
+        //On fait les liens avec les edges existants
+        edge.nextEdge = newEdge;
         next.prevEdge = newEdge;
+        if(newTwinEdge != null)
+        {
+            twin.twinEdge = newEdge;
+            edge.twinEdge = newTwinEdge;
+            twin.nextEdge = newTwinEdge;
+            twinNext.prevEdge = newTwinEdge;
+        }
+
+        //On ajoute les new edge à la liste
+        edges.Add(newEdge);
+        if (newTwinEdge != null)  edges.Add(newTwinEdge);
     }
 
     #endregion
