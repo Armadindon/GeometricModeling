@@ -31,7 +31,7 @@ class HalfEdgeMesh
     #region
     public List<HalfEdge> FindAllEdgeUsingVertice(Vertex v)
     {
-        return edges.Where<HalfEdge>(x => (x.sourceVertex == v) && (x.nextEdge.sourceVertex == v)).ToList();
+        return edges.Where<HalfEdge>(x => (x.sourceVertex == v) || (x.nextEdge.sourceVertex == v)).ToList();
     }
 
 
@@ -55,12 +55,11 @@ class HalfEdgeMesh
         Vector3 avg = new Vector3();
 
         HalfEdge current = f.face;
-        avg += current.sourceVertex.vertex;
-        while (current != f.face)
+        do
         {
             avg += current.sourceVertex.vertex;
             current = current.nextEdge;
-        }
+        } while (current != f.face);
 
         return avg / 4;
     }
@@ -73,15 +72,15 @@ class HalfEdgeMesh
         {
             nb++;
             edge = edge.nextEdge;
-        } while(edge != f.face);
+        } while (edge != f.face);
 
         return nb;
     }
     #endregion
 
-     /**
-     * FONCTION DE CONVERSIONS
-     * */
+    /**
+    * FONCTION DE CONVERSIONS
+    * */
     #region
     public static HalfEdgeMesh fromVertexFace(Vector3[] vertices, int[] faces)
     {
@@ -105,7 +104,11 @@ class HalfEdgeMesh
                 v1 = verticesDict[v1Index];
                 i++;
             }
-            else v1 = new Vertex(vertexIndice++, vertices[faces[i++]]);
+            else
+            {
+                v1 = new Vertex(vertexIndice++, vertices[faces[i++]]);
+                verticesDict.Add(v1Index, v1);
+            }
             HalfEdge p1 = new HalfEdge(index++, v1, null, null, null, null);
             Face face = new Face(facesIndex++, p1);
             facesList.Add(face);
@@ -118,7 +121,11 @@ class HalfEdgeMesh
                 v2 = verticesDict[v2Index];
                 i++;
             }
-            else v2 = new Vertex(vertexIndice++, vertices[faces[i++]]);
+            else
+            {
+                v2 = new Vertex(vertexIndice++, vertices[faces[i++]]);
+                verticesDict.Add(v2Index, v2);
+            }
             HalfEdge p2 = new HalfEdge(index++, v2, p1, null, null, face);
             p1.nextEdge = p2;
 
@@ -129,7 +136,11 @@ class HalfEdgeMesh
                 v3 = verticesDict[v3Index];
                 i++;
             }
-            else v3 = new Vertex(vertexIndice++, vertices[faces[i++]]);
+            else
+            {
+                v3 = new Vertex(vertexIndice++, vertices[faces[i++]]);
+                verticesDict.Add(v3Index, v3);
+            }
             HalfEdge p3 = new HalfEdge(index++, v3, p2, null, null, face);
             p2.nextEdge = p3;
 
@@ -140,7 +151,11 @@ class HalfEdgeMesh
                 v4 = verticesDict[v4Index];
                 i++;
             }
-            else v4 = new Vertex(vertexIndice++, vertices[faces[i++]]);
+            else
+            {
+                v4 = new Vertex(vertexIndice++, vertices[faces[i++]]);
+                verticesDict.Add(v4Index, v4);
+            }
             HalfEdge p4 = new HalfEdge(index++, v4, p3, p1, null, face);
             p3.nextEdge = p4;
             p1.prevEdge = p4;
@@ -186,7 +201,9 @@ class HalfEdgeMesh
             result.Add(p4);
         }
 
-        return new HalfEdgeMesh(result, verticesDict.Values.OrderBy(v => v.index).ToList(), facesList);
+        List<Vertex> verticesList = verticesDict.Values.OrderBy(v => v.index).ToList();
+
+        return new HalfEdgeMesh(result, verticesList, facesList);
     }
 
     //TODO: Re-Work to work with vertex indices
@@ -249,73 +266,79 @@ class HalfEdgeMesh
         //On calcule les Face points pour chaque Face
         for (int i = 0; i < faces.Count; i++) facePoints[faces[i]] = new Vertex(vertexIndice++, FaceAverage(faces[i]));
 
-        for (int i = 0; i < faces.Count; i++)
+        foreach (HalfEdge edge in edges)
         {
-            HalfEdge current = faces[i].face;
             // On parcours les Edge et on crée les edgePoints
-            do
+            if (edge.twinEdge != null && edgePoints.ContainsKey(edge.twinEdge))
             {
-                if (edgePoints.ContainsKey(current.twinEdge)) edgePoints[current] = edgePoints[current.twinEdge];
-                else
+                edgePoints[edge] = edgePoints[edge.twinEdge];
+            }
+            else
+            {
+                Vector3 edgePoint = new Vector3();
+
+                // On addtionne les points des bords
+                edgePoint += edge.sourceVertex.vertex;
+                edgePoint += edge.nextEdge.sourceVertex.vertex;
+
+                //On additionne les points des faces points
+                edgePoint += facePoints[edge.face].vertex;
+                if (edge.twinEdge != null)
                 {
-                    Vector3 edgePoint = new Vector3();
-
-                    // On addtionne les points des bords
-                    edgePoint += current.sourceVertex.vertex;
-                    edgePoint += current.nextEdge.sourceVertex.vertex;
-
-                    //On additionne les points des faces points
-                    edgePoint += facePoints[current.face].vertex;
-                    if (current.twinEdge != null)
-                    {
-                        edgePoint += facePoints[current.twinEdge.face].vertex;
-                        edgePoint /= 4;
-                    }
-                    else edgePoint /= 3;
-
-                    edgePoints[current] = new Vertex(vertexIndice++, edgePoint);
+                    edgePoint += facePoints[edge.twinEdge.face].vertex;
+                    edgePoint /= 4;
                 }
+                else edgePoint /= 3;
 
-                // On met à jour la position des verticles avec les VertexPoints
-                int valence = computeValenceOfPoint(current.sourceVertex);
-                List<HalfEdge> edgesUsingVertex = FindAllEdgeUsingVertice(current.sourceVertex);
-                List<Vertex> facesOfVertex = edgesUsingVertex
-                    .Select<HalfEdge, Vertex>(e => facePoints[e.face])
-                    .Distinct()
-                    .ToList();
-
-                Vector3 avgOfFacePoints = new Vector3();
-                for (int j = 0; j < facesOfVertex.Count; j++) avgOfFacePoints += facesOfVertex[j].vertex;
-                avgOfFacePoints /= facesOfVertex.Count;
-
-                Vector3 midpoint = new Vector3();
-                for (int j = 0; j < edgesUsingVertex.Count; j++)
-                {
-                    midpoint += (edgesUsingVertex[j].sourceVertex.vertex + edgesUsingVertex[j].nextEdge.sourceVertex.vertex) / 2;
-                }
-                midpoint /= edgesUsingVertex.Count;
-
-                Vector3 newPos = (avgOfFacePoints + 2 * midpoint + (valence - 3) * current.sourceVertex.vertex) / valence;
-                current.sourceVertex.vertex = newPos;
-
-                //On Split l'Edge
-                SplitEdge(current, edgePoints[current]);
-
-                current = current.nextEdge;
-            } while (current != faces[i].face);
-
-
-            // On split la face, avec le facepoint comme paramètre
-            
+                edgePoints[edge] = new Vertex(vertexIndice++, edgePoint);
+            }
         }
+
+        //On fait en 2 boucles pour éviter que les edgepoints se basent sur les coordonées actualisés
+        Dictionary<HalfEdge, Vector3> newPositions = new Dictionary<HalfEdge, Vector3>();
+        foreach (HalfEdge edge in edges)
+        {
+            // On met à jour la position des verticles avec les VertexPoints
+            int valence = computeValenceOfPoint(edge.sourceVertex);
+            List<HalfEdge> edgesUsingVertex = FindAllEdgeUsingVertice(edge.sourceVertex);
+            List<Vertex> facesOfVertex = edgesUsingVertex
+                .Select<HalfEdge, Vertex>(e => facePoints[e.face])
+                .Distinct()
+                .ToList();
+
+            Vector3 avgOfFacePoints = new Vector3();
+            for (int j = 0; j < facesOfVertex.Count; j++) avgOfFacePoints += facesOfVertex[j].vertex;
+            avgOfFacePoints /= facesOfVertex.Count;
+
+            Vector3 midpoint = new Vector3();
+            for (int j = 0; j < edgesUsingVertex.Count; j++)
+            {
+                midpoint += (edgesUsingVertex[j].sourceVertex.vertex + edgesUsingVertex[j].nextEdge.sourceVertex.vertex) / 2;
+            }
+            midpoint /= edgesUsingVertex.Count;
+
+            Vector3 newPos = (avgOfFacePoints + 2 * midpoint + (valence - 3) * edge.sourceVertex.vertex) / valence;
+            newPositions.Add(edge, newPos);
+        }
+
+        //On applique les nouvelles positions
+        foreach (HalfEdge edge in edges) edge.sourceVertex.vertex = newPositions[edge];
         
+        //TODO : Verifier plus bas
+        //On Split les edges
+        List<HalfEdge> edgesToSplit = filterTwinsFromList(edges);
+        foreach (HalfEdge edge in edgesToSplit)
+        {
+            SplitEdge(edge, edgePoints[edge]);
+        }
+
         //Pour ne pas traiter les faces que l'on vient de créer
         int initialFaceCount = faces.Count;
 
         for (int i = 0; i < initialFaceCount; i++)
         {
             int nbEdge = nbEdgeInFace(faces[i]);
-            if ( nbEdge > 4 && nbEdge%2 == 0)
+            if (nbEdge > 4 && nbEdge % 2 == 0)
             {
                 SplitFace(faces[i], facePoints[faces[i]]);
             }
@@ -323,19 +346,76 @@ class HalfEdgeMesh
 
     }
 
-    //TODO : A faire
-    public static void SplitFace(Face f, Vertex v)
+    public void SplitFace(Face f, Vertex v)
     {
-        //On split la face
-        int newNbFace = nbEdgeInFace(f) / 2;
 
-        //TODO: J'écrit l'algo car pas le temps ce soir
-        // On récupère les 4 points originaux de la face (les pairs dans une liste)
-        // On connecte chaque nouveau vertex au face point (les impairs dans une liste)
-        // On set la face et on relie bien les points entre eux
-        // On adapte pour former les faces
+        int facesIndex = faces.Count;
+        int edgesIndex = edges.Count;
+
+
+        // On trie les edges en fonction de si il viennent d'être crée ou si ils sont là de manière anciennes
+        List<HalfEdge> oldEdges = new List<HalfEdge>();
+        List<HalfEdge> newEdges = new List<HalfEdge>();
+        List<HalfEdge> createdEdges = new List<HalfEdge>();
+
+        int i = 0;
+
+        HalfEdge current = f.face;
+        do
+        {
+            if (i % 2 == 0) oldEdges.Add(current);
+            else newEdges.Add(current);
+            i++;
+            current = current.nextEdge;
+        } while (current != f.face);
+
+        // On crée de nouvelles faces à partir des ancien edges
+        List<Face> newFaces = new List<Face>();
+        newFaces.Add(f);
+        for (int j = 1; j < oldEdges.Count; j++)
+        {
+            newFaces.Add(new Face(facesIndex++, oldEdges[j]));
+        }
+
+        // On crée des nouveaux liens entre le début des newEdges et le facePoint
+        i = 0;
+        foreach (HalfEdge edge in newEdges)
+        {
+            HalfEdge e = new HalfEdge(edgesIndex++, edge.sourceVertex, oldEdges[i], null, null, newFaces[i]);
+            HalfEdge te = new HalfEdge(edgesIndex++, v, null, oldEdges[i].nextEdge, e, newFaces[(i + 1) % newFaces.Count]);
+            e.twinEdge = te;
+
+
+            //On les relie aux anciens edges
+            e.prevEdge.nextEdge = e;
+            createdEdges.Add(e);
+            te.nextEdge.prevEdge = te;
+            createdEdges.Add(te);
+
+            i++;
+        }
+
+        // On relie correctement les edges entre eux
+        for (i = 0; i < createdEdges.Count; i++)
+        {
+            createdEdges[i].nextEdge = createdEdges[(i - 1 + createdEdges.Count) % createdEdges.Count].twinEdge;
+            createdEdges[i].nextEdge.prevEdge = createdEdges[i];
+
+            createdEdges[i].twinEdge.prevEdge = createdEdges[(i - 1 + createdEdges.Count) % createdEdges.Count];
+            createdEdges[i].twinEdge.prevEdge.nextEdge = createdEdges[i].twinEdge;
+        }
+
+        //On change les faces des oldEdges / newEdges
+        for (i = 0; i < oldEdges.Count; i++) oldEdges[i].face = newFaces[i];
+        for (i = 0; i < newEdges.Count; i++) newEdges[i].face = newFaces[i];
+
+
+        //On ajoute les nouvelles face + nouvelles edges (et on prie pour que ça marche)
+        faces.AddRange(newFaces);
+        edges.AddRange(createdEdges);
     }
 
+    //TODO : Corriger les liens previous / next
     public void SplitEdge(HalfEdge edge, Vertex v)
     {
         //On split l'edge
@@ -344,7 +424,11 @@ class HalfEdgeMesh
         //On récupère les données
         HalfEdge twin = edge.twinEdge;
         HalfEdge next = edge.nextEdge;
-        HalfEdge twinNext = twin.nextEdge;
+        HalfEdge twinNext = null;
+        if (twin != null)
+        {
+            twinNext = twin.nextEdge;
+        }
 
         //On crée les nouveaux edges
         newEdge = new HalfEdge(edges.Count, v, edge, next, twin, edge.face);
@@ -356,7 +440,7 @@ class HalfEdgeMesh
         //On fait les liens avec les edges existants
         edge.nextEdge = newEdge;
         next.prevEdge = newEdge;
-        if(newTwinEdge != null)
+        if (newTwinEdge != null)
         {
             twin.twinEdge = newEdge;
             edge.twinEdge = newTwinEdge;
@@ -366,7 +450,7 @@ class HalfEdgeMesh
 
         //On ajoute les new edge à la liste
         edges.Add(newEdge);
-        if (newTwinEdge != null)  edges.Add(newTwinEdge);
+        if (newTwinEdge != null) edges.Add(newTwinEdge);
     }
 
     #endregion

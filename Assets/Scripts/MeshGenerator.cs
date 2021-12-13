@@ -18,12 +18,20 @@ public class MeshGenerator : MonoBehaviour
         //m_mf.sharedMesh = WrapNormalizedPlane(100, 100, (kx, ky) => new Vector3(kx, 0, ky));
 
         // Polygone Regulier
-        mMesh = CreateRegularPolygonXZQuads(5f,8);
+        mMesh = WrapNormalizePlaneQuads(1, 1, (kx, ky) => new Vector3(kx, 0, ky));
         m_mf.sharedMesh = mMesh;
         Debug.Log(MeshDisplayInfo.ExportMeshCSV(m_mf.sharedMesh));
 
-        HalfEdgeMesh convert = HalfEdgeMesh.fromVertexFace(mMesh.vertices, mMesh.GetIndices(0));
+        int[] indices = mMesh.GetIndices(0);
+        Vector3[] vertices = mMesh.vertices;
+        HalfEdgeMesh convert = HalfEdgeMesh.fromVertexFace(vertices, indices);
+        Debug.Log("LESSGOOO");
         Debug.Log(MeshDisplayInfo.ExportMeshCSV(convert.edges));
+        m_mf.sharedMesh = convert.ToMesh();
+
+        //ça marche bieng
+        // TODO: Tester de manière unitaire
+        convert.Catmull_Clark();
         m_mf.sharedMesh = convert.ToMesh();
         Debug.Log(MeshDisplayInfo.ExportMeshCSV(m_mf.sharedMesh));
     }
