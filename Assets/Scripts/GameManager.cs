@@ -14,6 +14,8 @@ public class GameManager : MonoBehaviour
     private PlanBehaviour plan;
     [SerializeField]
     private SphereBehaviour sphere;
+    [SerializeField]
+    private CylinderBehaviour cylinder;
 
 
     private GameObject intersectionGameObject;
@@ -24,9 +26,13 @@ public class GameManager : MonoBehaviour
         Destroy(intersectionGameObject);  
 
         Vector3 interPt;
+        Vector3 interPt1, interPt2;
         Vector3 interNormal;
         //bool result = Plan.inntersectSegmentplane(segment.segment, plan.plan, out interPt, out interNormal);
-        bool result = Sphere.InterSegmentSphere(segment.segment, sphere.sphere, out interPt, out interNormal);
-        if (result) intersectionGameObject = Instantiate(planInterPoint, interPt, Quaternion.identity);
-    }
+        //bool result = Sphere.InterSegmentSphere(segment.segment, sphere.sphere, out interPt, out interNormal);
+        bool result = Cylinder.InterSegCylInf(segment.segment, cylinder.cylinder, out interPt1, out interPt2, out interNormal);
+        
+        
+            if (result) intersectionGameObject = Instantiate(planInterPoint, interPt2, Quaternion.identity);
+     }
 }
