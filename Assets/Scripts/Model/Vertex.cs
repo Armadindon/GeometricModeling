@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System;
 
+[System.Diagnostics.DebuggerDisplay("{ToString()}")]
 public class Vertex
 {
     public int index;
@@ -24,5 +25,9 @@ public class Vertex
             Vertex v = (Vertex)obj;
             return (index == v.index);
         }
+    }
+    override public string ToString()
+    {
+        return "" + index;
     }
 }

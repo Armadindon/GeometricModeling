@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+[System.Diagnostics.DebuggerDisplay("{ToString()}")]
 public class HalfEdge
 {
 
@@ -24,6 +25,11 @@ public class HalfEdge
         this.nextEdge = nextEdge;
         this.twinEdge = twinEdge;
         this.face = face;
+    }
+
+    override public string ToString()
+    {
+        return prevEdge.index + " -> " + index + " -> " + nextEdge.index;
     }
 
 }

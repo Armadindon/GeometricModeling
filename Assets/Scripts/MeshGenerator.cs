@@ -9,31 +9,31 @@ public class MeshGenerator : MonoBehaviour
     delegate Vector3 ComputeVector3FromKxKz(float kx, float kz);
     private MeshFilter m_mf;
     private Mesh mMesh;
+    private HalfEdgeMesh mHmMesh;
     // Start is called before the first frame update
     void Start()
     {
         m_mf = GetComponent<MeshFilter>();
 
-        //Plane
-        //m_mf.sharedMesh = WrapNormalizedPlane(100, 100, (kx, ky) => new Vector3(kx, 0, ky));
-
         // Polygone Regulier
         mMesh = WrapNormalizePlaneQuads(1, 1, (kx, ky) => new Vector3(kx, 0, ky));
         m_mf.sharedMesh = mMesh;
-        Debug.Log(MeshDisplayInfo.ExportMeshCSV(m_mf.sharedMesh));
 
-        int[] indices = mMesh.GetIndices(0);
-        Vector3[] vertices = mMesh.vertices;
-        HalfEdgeMesh convert = HalfEdgeMesh.fromVertexFace(vertices, indices);
-        Debug.Log("LESSGOOO");
-        Debug.Log(MeshDisplayInfo.ExportMeshCSV(convert.edges));
-        m_mf.sharedMesh = convert.ToMesh();
+        mHmMesh = HalfEdgeMesh.fromVertexFace(mMesh.vertices, mMesh.GetIndices(0));
+        m_mf.sharedMesh = mHmMesh.ToMesh();
 
-        //ça marche bieng
-        // TODO: Tester de manière unitaire
-        convert.Catmull_Clark();
-        m_mf.sharedMesh = convert.ToMesh();
-        Debug.Log(MeshDisplayInfo.ExportMeshCSV(m_mf.sharedMesh));
+        StartCoroutine(CoroutineCatmullClark());
+    }
+
+    IEnumerator CoroutineCatmullClark()
+    {
+        for (float i = 0; i < 10; i++)
+        {
+            yield return new WaitForSeconds(3f);
+            mHmMesh.Catmull_Clark();
+            m_mf.sharedMesh = mHmMesh.ToMesh();
+            Debug.Log(MeshDisplayInfo.ExportMeshCSV(mHmMesh.edges));
+        }
     }
 
     private Mesh CreateTriangle()
@@ -308,5 +308,10 @@ public class MeshGenerator : MonoBehaviour
     void Update()
     {
 
+    }
+
+    private void OnDrawGizmos()
+    {
+        if(mHmMesh != null) mHmMesh.displayGizmos();
     }
 }

@@ -3,10 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UnityEditor;
 using UnityEngine;
 
 class HalfEdgeMesh
 {
+    private static float COEFF = .8f;
+    private static bool KEEP_EDGES_IF_VALENCE_UNDER_3 = true;
+
+
     public List<HalfEdge> edges;
     public List<Vertex> vertices;
     public List<Face> faces;
@@ -264,7 +269,10 @@ class HalfEdgeMesh
         int vertexIndice = vertices.Count;
 
         //On calcule les Face points pour chaque Face
-        for (int i = 0; i < faces.Count; i++) facePoints[faces[i]] = new Vertex(vertexIndice++, FaceAverage(faces[i]));
+        for (int i = 0; i < faces.Count; i++) { 
+            facePoints[faces[i]] = new Vertex(vertexIndice++, FaceAverage(faces[i]));
+            vertices.Add(facePoints[faces[i]]);
+        }
 
         foreach (HalfEdge edge in edges)
         {
@@ -291,6 +299,7 @@ class HalfEdgeMesh
                 else edgePoint /= 3;
 
                 edgePoints[edge] = new Vertex(vertexIndice++, edgePoint);
+                vertices.Add(edgePoints[edge]);
             }
         }
 
@@ -300,6 +309,9 @@ class HalfEdgeMesh
         {
             // On met à jour la position des verticles avec les VertexPoints
             int valence = computeValenceOfPoint(edge.sourceVertex);
+            if (valence <= 3 && KEEP_EDGES_IF_VALENCE_UNDER_3) continue;
+
+            Vector3 newPos;
             List<HalfEdge> edgesUsingVertex = FindAllEdgeUsingVertice(edge.sourceVertex);
             List<Vertex> facesOfVertex = edgesUsingVertex
                 .Select<HalfEdge, Vertex>(e => facePoints[e.face])
@@ -317,20 +329,37 @@ class HalfEdgeMesh
             }
             midpoint /= edgesUsingVertex.Count;
 
-            Vector3 newPos = (avgOfFacePoints + 2 * midpoint + (valence - 3) * edge.sourceVertex.vertex) / valence;
+            // FORMULE DU PROFESSEUR LORSQUE VALENCE <= 3
+            // L'edge point en bordure ne prend pas en compte le facePoint, donc edgepoints = midpoints
+            // newPos = (sum(midpoints) + positionCourante) / (nbMidpoints +1)
+
+            if (valence <= 3) newPos = (avgOfFacePoints / valence) + (2 * midpoint / valence) + COEFF * edge.sourceVertex.vertex;
+            else 
+            { 
+                newPos = (avgOfFacePoints / valence) + (2 * midpoint / valence) + ((valence - 3) / valence) * edge.sourceVertex.vertex; 
+            }
+
             newPositions.Add(edge, newPos);
         }
 
         //On applique les nouvelles positions
-        foreach (HalfEdge edge in edges) edge.sourceVertex.vertex = newPositions[edge];
+        foreach (HalfEdge edge in edges)
+        {
+            int valence = computeValenceOfPoint(edge.sourceVertex);
+            if(valence > 3 || !KEEP_EDGES_IF_VALENCE_UNDER_3)
+            {
+                edge.sourceVertex.vertex = newPositions[edge];
+            }
+        }
         
-        //TODO : Verifier plus bas
         //On Split les edges
         List<HalfEdge> edgesToSplit = filterTwinsFromList(edges);
+        
         foreach (HalfEdge edge in edgesToSplit)
         {
             SplitEdge(edge, edgePoints[edge]);
         }
+        
 
         //Pour ne pas traiter les faces que l'on vient de créer
         int initialFaceCount = faces.Count;
@@ -343,6 +372,7 @@ class HalfEdgeMesh
                 SplitFace(faces[i], facePoints[faces[i]]);
             }
         }
+        
 
     }
 
@@ -355,104 +385,108 @@ class HalfEdgeMesh
 
         // On trie les edges en fonction de si il viennent d'être crée ou si ils sont là de manière anciennes
         List<HalfEdge> oldEdges = new List<HalfEdge>();
+        List<HalfEdge> addedEdges = new List<HalfEdge>();
         List<HalfEdge> newEdges = new List<HalfEdge>();
-        List<HalfEdge> createdEdges = new List<HalfEdge>();
+        List<Face> newFaces = new List<Face>();
 
         int i = 0;
-
         HalfEdge current = f.face;
         do
         {
             if (i % 2 == 0) oldEdges.Add(current);
-            else newEdges.Add(current);
+            else addedEdges.Add(current);
             i++;
             current = current.nextEdge;
         } while (current != f.face);
 
         // On crée de nouvelles faces à partir des ancien edges
-        List<Face> newFaces = new List<Face>();
         newFaces.Add(f);
         for (int j = 1; j < oldEdges.Count; j++)
         {
             newFaces.Add(new Face(facesIndex++, oldEdges[j]));
         }
 
-        // On crée des nouveaux liens entre le début des newEdges et le facePoint
-        i = 0;
-        foreach (HalfEdge edge in newEdges)
-        {
-            HalfEdge e = new HalfEdge(edgesIndex++, edge.sourceVertex, oldEdges[i], null, null, newFaces[i]);
-            HalfEdge te = new HalfEdge(edgesIndex++, v, null, oldEdges[i].nextEdge, e, newFaces[(i + 1) % newFaces.Count]);
-            e.twinEdge = te;
-
-
-            //On les relie aux anciens edges
-            e.prevEdge.nextEdge = e;
-            createdEdges.Add(e);
-            te.nextEdge.prevEdge = te;
-            createdEdges.Add(te);
-
-            i++;
-        }
-
-        // On relie correctement les edges entre eux
-        for (i = 0; i < createdEdges.Count; i++)
-        {
-            createdEdges[i].nextEdge = createdEdges[(i - 1 + createdEdges.Count) % createdEdges.Count].twinEdge;
-            createdEdges[i].nextEdge.prevEdge = createdEdges[i];
-
-            createdEdges[i].twinEdge.prevEdge = createdEdges[(i - 1 + createdEdges.Count) % createdEdges.Count];
-            createdEdges[i].twinEdge.prevEdge.nextEdge = createdEdges[i].twinEdge;
-        }
-
-        //On change les faces des oldEdges / newEdges
+        //On change les faces
         for (i = 0; i < oldEdges.Count; i++) oldEdges[i].face = newFaces[i];
-        for (i = 0; i < newEdges.Count; i++) newEdges[i].face = newFaces[i];
+        for (i = 0; i < addedEdges.Count; i++) addedEdges[i].face = newFaces[(i + 1) % newFaces.Count];
 
+        // On crée des nouveaux liens en partant des oldEdges vers les facePoints
+        foreach (HalfEdge edge in addedEdges)
+        {
+            HalfEdge edgeToFacePt = new HalfEdge(edgesIndex++, edge.sourceVertex, edge.prevEdge, null, null, edge.face);
+            HalfEdge facePtToEdge = new HalfEdge(edgesIndex++, v, edgeToFacePt, edge.prevEdge.prevEdge, null, edge.face);
+            edgeToFacePt.nextEdge = facePtToEdge;
+
+            newEdges.Add(edgeToFacePt);
+            newEdges.Add(facePtToEdge);
+        }
+
+        // On set les twin des nouveaux edges
+        for(i = 0; i < newEdges.Count; i++)
+        {
+            newEdges[i].prevEdge.nextEdge = newEdges[i];
+            newEdges[i].nextEdge.prevEdge = newEdges[i];
+            //On traite que les edge pair par soucis de simplicité
+            if (i % 2 != 0) continue;
+
+            //Correspond au prochain de la fin du quad
+            int twinEdgeIndex = (i + 3) % newEdges.Count;
+            newEdges[i].twinEdge = newEdges[twinEdgeIndex];
+            newEdges[i].twinEdge.twinEdge = newEdges[i]; 
+        }
 
         //On ajoute les nouvelles face + nouvelles edges (et on prie pour que ça marche)
         faces.AddRange(newFaces);
-        edges.AddRange(createdEdges);
+        edges.AddRange(newEdges);
     }
 
-    //TODO : Corriger les liens previous / next
-    public void SplitEdge(HalfEdge edge, Vertex v)
+    public void SplitEdge(HalfEdge e, Vertex v)
     {
-        //On split l'edge
-        HalfEdge newTwinEdge = null, newEdge;
+        int halfEdgeIndex = edges.Count;
 
         //On récupère les données
-        HalfEdge twin = edge.twinEdge;
-        HalfEdge next = edge.nextEdge;
-        HalfEdge twinNext = null;
-        if (twin != null)
-        {
-            twinNext = twin.nextEdge;
-        }
+        Face fe = e.face;
+        HalfEdge nx = e.nextEdge;
+        HalfEdge p = e.prevEdge;
+        HalfEdge t = e.twinEdge;
+        Face tfe = (t == null) ? null : t.face;
+        HalfEdge nxt = (t==null)?null:t.nextEdge;
+        HalfEdge pxt = (t==null)?null:t.prevEdge;
 
         //On crée les nouveaux edges
-        newEdge = new HalfEdge(edges.Count, v, edge, next, twin, edge.face);
-        if (twin != null)
+        HalfEdge ne = new HalfEdge(halfEdgeIndex++, v, e, nx, t, fe);
+        HalfEdge nt = (t == null) ? null : new HalfEdge(halfEdgeIndex++, v, t, nxt, e, tfe);
+
+        //On set les prev et les nexte
+        ne.nextEdge.prevEdge = ne;
+        ne.prevEdge.nextEdge = ne;
+        if (t != null)
         {
-            newTwinEdge = new HalfEdge(edges.Count + 1, v, twin, twinNext, edge, twin.face);
+            nt.nextEdge.prevEdge = nt;
+            nt.prevEdge.nextEdge = nt;
         }
 
-        //On fait les liens avec les edges existants
-        edge.nextEdge = newEdge;
-        next.prevEdge = newEdge;
-        if (newTwinEdge != null)
-        {
-            twin.twinEdge = newEdge;
-            edge.twinEdge = newTwinEdge;
-            twin.nextEdge = newTwinEdge;
-            twinNext.prevEdge = newTwinEdge;
-        }
-
-        //On ajoute les new edge à la liste
-        edges.Add(newEdge);
-        if (newTwinEdge != null) edges.Add(newTwinEdge);
+        edges.Add(ne);
+        if (nt != null) edges.Add(nt);
     }
 
+    #endregion
+
+    #region
+    public void displayGizmos()
+    {
+
+        foreach(HalfEdge edge in edges)
+        {
+            Gizmos.color = Color.blue;
+            Handles.Label((edge.sourceVertex.vertex + edge.nextEdge.sourceVertex.vertex + FaceAverage(edge.face)*.1f)/2.1f, ""+edge.index);
+            Gizmos.DrawLine(edge.sourceVertex.vertex, edge.nextEdge.sourceVertex.vertex);
+
+            Gizmos.color = Color.red;
+            Gizmos.DrawSphere(edge.sourceVertex.vertex, .02f);
+            Handles.Label(edge.sourceVertex.vertex, ""+edge.sourceVertex.index);
+        }
+    }
     #endregion
 
 }
