@@ -40,17 +40,10 @@ class HalfEdgeMesh
     }
 
 
-    public int computeValenceOfPoint(Vertex v)
-    {
-        List<HalfEdge> edgesUsingVertex = FindAllEdgeUsingVertice(v);
-        List<HalfEdge> edgesList = filterTwinsFromList(edgesUsingVertex);
-        return edgesList.Count;
-    }
-
     public static List<HalfEdge> filterTwinsFromList(List<HalfEdge> edges)
     {
         List<HalfEdge> copy = new List<HalfEdge>(edges);
-        for (int i = 0; i < edges.Count; i++) copy.Remove(edges[i].twinEdge);
+        for (int i = 0; i < edges.Count; i++) if (copy.Contains(edges[i])) copy.Remove(edges[i].twinEdge);
         return copy;
     }
 
@@ -58,15 +51,17 @@ class HalfEdgeMesh
     public static Vector3 FaceAverage(Face f)
     {
         Vector3 avg = new Vector3();
+        int i = 0;
 
         HalfEdge current = f.face;
         do
         {
             avg += current.sourceVertex.vertex;
             current = current.nextEdge;
+            i++;
         } while (current != f.face);
 
-        return avg / 4;
+        return avg / i;
     }
 
     public static int nbEdgeInFace(Face f)
@@ -263,8 +258,16 @@ class HalfEdgeMesh
     #region
     public void Catmull_Clark()
     {
+        //Propriétés des faces
         Dictionary<Face, Vertex> facePoints = new Dictionary<Face, Vertex>();
+
+        //Propriétés des points
+        Dictionary<Vertex, int> valenceOfPoint = new Dictionary<Vertex, int>();
+
+        //Propriétés des edges
         Dictionary<HalfEdge, Vertex> edgePoints = new Dictionary<HalfEdge, Vertex>();
+        Dictionary<HalfEdge, Vector3> midPoints = new Dictionary<HalfEdge, Vector3>();
+
 
         int vertexIndice = vertices.Count;
 
@@ -301,55 +304,44 @@ class HalfEdgeMesh
                 edgePoints[edge] = new Vertex(vertexIndice++, edgePoint);
                 vertices.Add(edgePoints[edge]);
             }
-        }
 
-        //On fait en 2 boucles pour éviter que les edgepoints se basent sur les coordonées actualisés
-        Dictionary<HalfEdge, Vector3> newPositions = new Dictionary<HalfEdge, Vector3>();
-        foreach (HalfEdge edge in edges)
-        {
-            // On met à jour la position des verticles avec les VertexPoints
-            int valence = computeValenceOfPoint(edge.sourceVertex);
-            if (valence <= 3 && KEEP_EDGES_IF_VALENCE_UNDER_3) continue;
+            //Données liées au edge
+            midPoints[edge] = (edge.sourceVertex.vertex + edge.nextEdge.sourceVertex.vertex) / 2;
 
-            Vector3 newPos;
-            List<HalfEdge> edgesUsingVertex = FindAllEdgeUsingVertice(edge.sourceVertex);
-            List<Vertex> facesOfVertex = edgesUsingVertex
-                .Select<HalfEdge, Vertex>(e => facePoints[e.face])
-                .Distinct()
-                .ToList();
-
-            Vector3 avgOfFacePoints = new Vector3();
-            for (int j = 0; j < facesOfVertex.Count; j++) avgOfFacePoints += facesOfVertex[j].vertex;
-            avgOfFacePoints /= facesOfVertex.Count;
-
-            Vector3 midpoint = new Vector3();
-            for (int j = 0; j < edgesUsingVertex.Count; j++)
+            //On calcule les points liés à la vertice
+            if (!valenceOfPoint.ContainsKey(edge.sourceVertex)) //Si la vertice n'as pas déjà été traité
             {
-                midpoint += (edgesUsingVertex[j].sourceVertex.vertex + edgesUsingVertex[j].nextEdge.sourceVertex.vertex) / 2;
+                //Calcul de la valence
+                List<HalfEdge> edgesOfVertice = FindAllEdgeUsingVertice(edge.sourceVertex);
+                List<Face> facesUsingVertice = edgesOfVertice.Select<HalfEdge, Face>(x => x.face).Distinct().ToList();
+                edgesOfVertice = filterTwinsFromList(edgesOfVertice);
+                int v = edgesOfVertice.Count;
+                valenceOfPoint[edge.sourceVertex] = v;
+
+                //Calcul de la moyenne des midpoints
+                Vector3 avgOfMidpoints = new Vector3();
+                foreach (HalfEdge edgeOfVertice in edgesOfVertice)
+                {
+                    avgOfMidpoints += (edgeOfVertice.sourceVertex.vertex + edgeOfVertice.nextEdge.sourceVertex.vertex) / 2;
+                }
+                avgOfMidpoints /= edgesOfVertice.Count;
+
+                //Calcul de la moyenne des facepoints
+                Vector3 facePointAvg = new Vector3();
+                foreach (Face face in facesUsingVertice)
+                {
+                    facePointAvg += facePoints[face].vertex;
+                }
+                facePointAvg /= facesUsingVertice.Count;
+
+
+                //On change la position
+                if(v > 3)
+                {
+                    edge.sourceVertex.vertex = facePointAvg / v + 2 * avgOfMidpoints / v + (v - 3) / v * edge.sourceVertex.vertex;
+                }
             }
-            midpoint /= edgesUsingVertex.Count;
 
-            // FORMULE DU PROFESSEUR LORSQUE VALENCE <= 3
-            // L'edge point en bordure ne prend pas en compte le facePoint, donc edgepoints = midpoints
-            // newPos = (sum(midpoints) + positionCourante) / (nbMidpoints +1)
-
-            if (valence <= 3) newPos = (avgOfFacePoints / valence) + (2 * midpoint / valence) + COEFF * edge.sourceVertex.vertex;
-            else 
-            { 
-                newPos = (avgOfFacePoints / valence) + (2 * midpoint / valence) + ((valence - 3) / valence) * edge.sourceVertex.vertex; 
-            }
-
-            newPositions.Add(edge, newPos);
-        }
-
-        //On applique les nouvelles positions
-        foreach (HalfEdge edge in edges)
-        {
-            int valence = computeValenceOfPoint(edge.sourceVertex);
-            if(valence > 3 || !KEEP_EDGES_IF_VALENCE_UNDER_3)
-            {
-                edge.sourceVertex.vertex = newPositions[edge];
-            }
         }
         
         //On Split les edges

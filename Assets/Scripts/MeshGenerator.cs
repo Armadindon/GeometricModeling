@@ -15,8 +15,9 @@ public class MeshGenerator : MonoBehaviour
     {
         m_mf = GetComponent<MeshFilter>();
 
-        // Polygone Regulier
-        mMesh = WrapNormalizePlaneQuads(1, 1, (kx, ky) => new Vector3(kx, 0, ky));
+        mMesh = WrapNormalizePlaneQuads(1, 1, (kx, ky) => {
+            return new Vector3(kx, 0, ky);
+        });
         m_mf.sharedMesh = mMesh;
 
         mHmMesh = HalfEdgeMesh.fromVertexFace(mMesh.vertices, mMesh.GetIndices(0));

@@ -26,6 +26,12 @@ public class Vertex
             return (index == v.index);
         }
     }
+
+    public override int GetHashCode()
+    {
+        return base.GetHashCode();
+    }
+
     override public string ToString()
     {
         return "" + index;
