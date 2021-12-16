@@ -141,7 +141,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &40639061
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -331,7 +331,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &901799642
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -549,6 +549,7 @@ MonoBehaviour:
   planInterPoint: {fileID: 9183371042774372347, guid: f84262a282b81104da9c513ede57e178, type: 3}
   segment: {fileID: 6938822638371201721}
   plan: {fileID: 1263339728893207}
+  real_plan_gameobject: {fileID: 1263339728893206}
   sphere: {fileID: 901799642}
   cylinder: {fileID: 40639061}
 --- !u!1 &1494968082
@@ -621,7 +622,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1263339728893206}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 65600d426d804344992a994c22c10bfe, type: 3}
   m_Name: 

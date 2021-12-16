@@ -17,10 +17,13 @@ public class SphereBehaviour : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        //ce pt a mettre ds gamemanager
         sphere.center = gameObject.transform.position;
 
         // Update representation graphique
+
         gameObject.transform.localScale = new Vector3(sphere.radius*2, sphere.radius*2, sphere.radius*2);
+        transform.Rotate(0, 20f * Time.deltaTime, 0, Space.Self);
     }
 
 }

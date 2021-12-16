@@ -46,6 +46,8 @@ public class Cylinder
 
         float t1 = racine1;
         float t2 = racine2;
+
+
         interPt1 = (seg.p1 / 2) + t1 * AB + seg.p2;
         interPt2 = (seg.p2 / 2) + t2 * AB + seg.p1;
 

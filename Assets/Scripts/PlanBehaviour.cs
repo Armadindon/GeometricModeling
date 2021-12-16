@@ -15,6 +15,8 @@ public class PlanBehaviour : MonoBehaviour
     void Update()
     {
         // On repositionne le plan en fonction du vecteur normal
-        gameObject.transform.rotation = Quaternion.LookRotation(plan.normal);
+        //gameObject.transform.rotation = Quaternion.LookRotation(plan.normal);
+        transform.Rotate(20f * Time.deltaTime, 0, 0, Space.Self);
+
     }
 }

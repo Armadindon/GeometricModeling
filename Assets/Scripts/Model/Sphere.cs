@@ -37,7 +37,9 @@ public class Sphere
             return false;
         }
 
+
         interPt = seg.p1 + t * ab;
+
         
         return true;
     }
