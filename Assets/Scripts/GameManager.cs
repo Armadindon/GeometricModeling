@@ -17,22 +17,21 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private CylinderBehaviour cylinder;
 
-
     private GameObject intersectionGameObject;
 
     // Update is called once per frame
     void Update()
     {
-        Destroy(intersectionGameObject);  
+        Destroy(intersectionGameObject);
 
         Vector3 interPt;
-        Vector3 interPt1, interPt2;
+        //Vector3 interPt1, interPt2;
         Vector3 interNormal;
         //bool result = Plan.inntersectSegmentplane(segment.segment, plan.plan, out interPt, out interNormal);
         //bool result = Sphere.InterSegmentSphere(segment.segment, sphere.sphere, out interPt, out interNormal);
-        bool result = Cylinder.InterSegCylInf(segment.segment, cylinder.cylinder, out interPt1, out interPt2, out interNormal);
-        
-        
-            if (result) intersectionGameObject = Instantiate(planInterPoint, interPt2, Quaternion.identity);
-     }
+        bool result = Cylinder.InterSegCylInf(segment.segment, cylinder.cylinder, out interPt, out interNormal);
+        //bool result = Cylinder.InterSegCylInf(segment.segment, cylinder.cylinder, out interPt1, out interPt2, out interNormal);
+
+        if (result) intersectionGameObject = Instantiate(planInterPoint, interPt, Quaternion.identity);
+    }
 }
