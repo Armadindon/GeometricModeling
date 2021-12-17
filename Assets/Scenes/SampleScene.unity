@@ -134,15 +134,16 @@ GameObject:
   - component: {fileID: 40639065}
   - component: {fileID: 40639064}
   - component: {fileID: 40639063}
-  - component: {fileID: 40639061}
+  - component: {fileID: 40639062}
+  - component: {fileID: 40639067}
   m_Layer: 0
   m_Name: Cylinder
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!114 &40639061
+  m_IsActive: 1
+--- !u!114 &40639062
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -151,11 +152,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 40639060}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 21875679df360451a814e69c6a474e00, type: 3}
+  m_Script: {fileID: 11500000, guid: 4c2cfee652b384f0f8689be07f873e52, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  height: 4
-  radius: 1
+  m_RotationDuration: 20
+  m_RotationSpeed: 10
+  m_QuaternionLerpCoef: 5
 --- !u!23 &40639063
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -219,6 +221,20 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &40639067
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 40639060}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e2d52a02eaee424cafeed00e8f94cac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_MaxAngle: 90
+  m_QuaternionLerpCoef: 3
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -324,7 +340,8 @@ GameObject:
   - component: {fileID: 901799645}
   - component: {fileID: 901799644}
   - component: {fileID: 901799643}
-  - component: {fileID: 901799642}
+  - component: {fileID: 901799647}
+  - component: {fileID: 901799648}
   m_Layer: 0
   m_Name: Sphere
   m_TagString: Untagged
@@ -332,18 +349,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 0
---- !u!114 &901799642
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 901799641}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2697d02ada1b943f7aacd02fee5f4728, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!135 &901799643
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -420,6 +425,35 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &901799647
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 901799641}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c2cfee652b384f0f8689be07f873e52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_RotationDuration: 20
+  m_RotationSpeed: 12
+  m_QuaternionLerpCoef: 5
+--- !u!114 &901799648
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 901799641}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e2d52a02eaee424cafeed00e8f94cac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_MaxAngle: 180
+  m_QuaternionLerpCoef: 5
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0
@@ -546,12 +580,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 558d5af757a33704bbff689731e3bd6d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  planInterPoint: {fileID: 9183371042774372347, guid: f84262a282b81104da9c513ede57e178, type: 3}
+  plan: {fileID: 1263339728893206}
   segment: {fileID: 6938822638371201721}
-  plan: {fileID: 1263339728893207}
-  real_plan_gameobject: {fileID: 1263339728893206}
-  sphere: {fileID: 901799642}
-  cylinder: {fileID: 40639061}
+  sphere: {fileID: 901799641}
+  cylinder: {fileID: 40639060}
+  height: 2
+  radius: 0.5
+  planInterPoint: {fileID: 9183371042774372347, guid: f84262a282b81104da9c513ede57e178, type: 3}
+  sizeIntersectPts: 2
+  colorIntersectCylinder: {r: 0.07943218, g: 0.17159273, b: 0.8018868, a: 0}
 --- !u!1 &1494968082
 GameObject:
   m_ObjectHideFlags: 0
@@ -607,26 +644,28 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1263339728893205}
-  - component: {fileID: 1263339728893207}
+  - component: {fileID: 1263339728893209}
   m_Layer: 0
   m_Name: Plan
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1263339728893207
+  m_IsActive: 0
+--- !u!114 &1263339728893209
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1263339728893206}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 65600d426d804344992a994c22c10bfe, type: 3}
+  m_Script: {fileID: 11500000, guid: 7e2d52a02eaee424cafeed00e8f94cac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_MaxAngle: 90
+  m_QuaternionLerpCoef: 3
 --- !u!64 &1263339859027392
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -810,7 +849,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6938822638371201720}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -1, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 6938822639721290080}
@@ -825,7 +864,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6938822639721290081}
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 0, z: 0.5}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.25, y: 0.5, z: 0.25}
   m_Children: []
   m_Father: {fileID: 6938822638371201727}

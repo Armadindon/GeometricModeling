@@ -17,7 +17,7 @@ public class Plan
     public Plan(Vector3 P1, Vector3 P2, Vector3 P3) : this(Vector3.Cross(P2 - P1, P3 - P1).normalized, Vector3.Dot(P1, Vector3.Cross(P2 - P1, P3 - P1).normalized))
     { }
 
-    public static bool inntersectSegmentplane(Segment seg, Plan plan, out Vector3 interPt, out Vector3 interNormal)
+    public static bool intersectSegmentplane(Segment seg, Plan plan, out Vector3 interPt, out Vector3 interNormal)
     {           
         // Pour erreur compil
         interPt = Vector3.one;
