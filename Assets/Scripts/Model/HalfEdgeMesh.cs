@@ -485,6 +485,7 @@ class HalfEdgeMesh
     #endregion
 
     #region
+    #if UNITY_EDITOR
     public void displayGizmos()
     {
         //Propriétés des faces
@@ -552,6 +553,7 @@ class HalfEdgeMesh
             Handles.Label(edge.sourceVertex.vertex + new Vector3(0,0,.03f), ""+edge.sourceVertex.index, m_Style);
         }
     }
+    #endif
     #endregion
 
 }

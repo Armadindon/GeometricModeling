@@ -11,36 +11,59 @@ public class MeshGenerator : MonoBehaviour
     private Mesh mMesh;
     private HalfEdgeMesh mHmMesh;
     // Start is called before the first frame update
+    
     void Start()
     {
-        m_mf = GetComponent<MeshFilter>();
-
-        /*
-        mMesh = WrapNormalizePlaneQuads(1, 1, (kx, ky) => {
-            return new Vector3(kx*10, 0, ky*10);
-        });*/
-        
-        mMesh = CreateCubeQuads(2f);
-        
-        m_mf.sharedMesh = mMesh;
-
-        mHmMesh = HalfEdgeMesh.fromVertexFace(mMesh.vertices, mMesh.GetIndices(0));
-        m_mf.sharedMesh = mHmMesh.ToMesh();
-
-        StartCoroutine(CoroutineCatmullClark());
+        m_mf = GetComponent<MeshFilter>(); 
     }
 
-    IEnumerator CoroutineCatmullClark()
+    public IEnumerator CoroutineCatmullClark(float timeBetweenIterations)
     {
-        for (float i = 0; i < 3; i++)
+        if (mMesh == null || mHmMesh == null) yield break;
+        UIManager.INSTANCE.setIterationCount(0);
+        for (int i = 1; i <= 3; i++)
         {
-            yield return new WaitForSeconds(3f);
+            yield return new WaitForSeconds(timeBetweenIterations);
             mHmMesh.Catmull_Clark();
             m_mf.sharedMesh = mHmMesh.ToMesh();
-            //Debug.Log(MeshDisplayInfo.ExportMeshCSV(mHmMesh.edges));
+            UIManager.INSTANCE.setIterationCount(i);
         }
     }
 
+    /**
+     * Méthodes de gestion pour les évènements venant de l'interface
+     */
+    #region
+    public void deleteCurrentMesh()
+    {
+        UIManager.INSTANCE.setIterationCount(0);
+        mMesh = null;
+        mHmMesh = null;
+    }
+
+    public void CreateCube()
+    {
+        deleteCurrentMesh();
+        mMesh = CreateCubeQuads(2f);
+        m_mf.sharedMesh = mMesh;
+        mHmMesh = HalfEdgeMesh.fromVertexFace(mMesh.vertices, mMesh.GetIndices(0));
+    }
+
+    public void CreateChips()
+    {
+        deleteCurrentMesh();
+        mMesh = CreateChipsQuads(2f);
+        m_mf.sharedMesh = mMesh;
+        mHmMesh = HalfEdgeMesh.fromVertexFace(mMesh.vertices, mMesh.GetIndices(0));
+    }
+
+    #endregion
+
+
+    /**
+     * Méthodes pour la génération de formes
+     */
+    #region
     private Mesh CreateTriangle()
     {
         Mesh newMesh = new Mesh();
@@ -319,14 +342,14 @@ public class MeshGenerator : MonoBehaviour
         int[] quads = { 0, 1, 2, 3, 2, 1, 5, 6, 4, 7, 6, 5, 7, 4, 0, 3, 3, 2, 6, 7, 4, 5, 1, 0 };
 
         //Vertices
-        vertices[0] = Vector3.zero;
-        vertices[1] = new Vector3(0, 0, edgeWidth);
-        vertices[2] = new Vector3(edgeWidth, 0, edgeWidth);
-        vertices[3] = new Vector3(edgeWidth, 0, 0);
-        vertices[4] = new Vector3(0, -edgeWidth, 0);
-        vertices[5] = new Vector3(0, -edgeWidth, edgeWidth);
-        vertices[6] = new Vector3(edgeWidth, -edgeWidth, edgeWidth);
-        vertices[7] = new Vector3(edgeWidth, -edgeWidth, 0);
+        vertices[0] = new Vector3(0, edgeWidth, 0);
+        vertices[1] = new Vector3(0, edgeWidth, edgeWidth);
+        vertices[2] = new Vector3(edgeWidth, edgeWidth, edgeWidth);
+        vertices[3] = new Vector3(edgeWidth, edgeWidth, 0);
+        vertices[4] = Vector3.zero;
+        vertices[5] = new Vector3(0, 0, edgeWidth);
+        vertices[6] = new Vector3(edgeWidth, 0, edgeWidth);
+        vertices[7] = new Vector3(edgeWidth, 0, 0);
 
         newMesh.vertices = vertices;
         newMesh.SetIndices(quads, MeshTopology.Quads, 0);
@@ -335,14 +358,36 @@ public class MeshGenerator : MonoBehaviour
         return newMesh;
     }
 
-    // Update is called once per frame
-    void Update()
+    Mesh CreateChipsQuads(float edgeWidth)
     {
+        Mesh newMesh = new Mesh();
+        newMesh.name = "ChipsQuads";
 
+        Vector3[] vertices = new Vector3[8];
+        int[] quads = { 0, 1, 2, 3, 4, 7, 6, 5, 7, 4, 0, 3};
+
+        //Vertices
+        vertices[0] = new Vector3(0, edgeWidth, 0);
+        vertices[1] = new Vector3(0, edgeWidth, edgeWidth);
+        vertices[2] = new Vector3(edgeWidth, edgeWidth, edgeWidth);
+        vertices[3] = new Vector3(edgeWidth, edgeWidth, 0);
+        vertices[4] = Vector3.zero;
+        vertices[5] = new Vector3(0, 0, edgeWidth);
+        vertices[6] = new Vector3(edgeWidth, 0, edgeWidth);
+        vertices[7] = new Vector3(edgeWidth, 0, 0);
+
+        newMesh.vertices = vertices;
+        newMesh.SetIndices(quads, MeshTopology.Quads, 0);
+        newMesh.RecalculateBounds();
+        newMesh.RecalculateNormals();
+        return newMesh;
     }
+    #endregion
 
+    #if UNITY_EDITOR
     private void OnDrawGizmos()
     {
         if(mHmMesh != null) mHmMesh.displayGizmos();
     }
+    #endif
 }
