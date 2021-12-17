@@ -51,6 +51,12 @@ public class UIManager : MonoBehaviour
         mg.CreateChips();
     }
 
+    public void polygonButtonClicked()
+    {
+        allowCatmullClark = true;
+        mg.CreateRegularPolygon();
+    }
+
     public void StartCatmullClark()
     {
         if (!allowCatmullClark) return;

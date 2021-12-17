@@ -57,6 +57,14 @@ public class MeshGenerator : MonoBehaviour
         mHmMesh = HalfEdgeMesh.fromVertexFace(mMesh.vertices, mMesh.GetIndices(0));
     }
 
+    public void CreateRegularPolygon()
+    {
+        deleteCurrentMesh();
+        mMesh = CreateRegularPolygonXZQuads(2f, 10);
+        m_mf.sharedMesh = mMesh;
+        mHmMesh = HalfEdgeMesh.fromVertexFace(mMesh.vertices, mMesh.GetIndices(0));
+    }
+
     #endregion
 
 
@@ -300,11 +308,11 @@ public class MeshGenerator : MonoBehaviour
         for (int i = 0; i < nQuads; i++)
         {
             float x = radius * Mathf.Sin((2 * Mathf.PI * i) / nQuads);
-            float z = radius * Mathf.Cos((2 * Mathf.PI * i) / nQuads);
-            Vector3 centerVertice = new Vector3(x, 0,z);
+            float y = radius * Mathf.Cos((2 * Mathf.PI * i) / nQuads);
+            Vector3 centerVertice = new Vector3(x, y, 0);
             x = radius * Mathf.Sin((2 * Mathf.PI * (i + 1)) / nQuads);
-            z = radius * Mathf.Cos((2 * Mathf.PI * (i + 1)) / nQuads);
-            Vector3 nextVertice = new Vector3(x, 0, z);
+            y = radius * Mathf.Cos((2 * Mathf.PI * (i + 1)) / nQuads);
+            Vector3 nextVertice = new Vector3(x, y, 0);
 
             //On calcule les points entre centerVertice et la prochaine vertice
             Vector3 midNextVertice = Vector3.Lerp(centerVertice, nextVertice, .5f);
@@ -341,15 +349,17 @@ public class MeshGenerator : MonoBehaviour
         Vector3[] vertices = new Vector3[8];
         int[] quads = { 0, 1, 2, 3, 2, 1, 5, 6, 4, 7, 6, 5, 7, 4, 0, 3, 3, 2, 6, 7, 4, 5, 1, 0 };
 
+        edgeWidth /= 2;
+
         //Vertices
-        vertices[0] = new Vector3(0, edgeWidth, 0);
-        vertices[1] = new Vector3(0, edgeWidth, edgeWidth);
+        vertices[0] = new Vector3(-edgeWidth , edgeWidth, -edgeWidth);
+        vertices[1] = new Vector3(-edgeWidth, edgeWidth, edgeWidth);
         vertices[2] = new Vector3(edgeWidth, edgeWidth, edgeWidth);
-        vertices[3] = new Vector3(edgeWidth, edgeWidth, 0);
-        vertices[4] = Vector3.zero;
-        vertices[5] = new Vector3(0, 0, edgeWidth);
-        vertices[6] = new Vector3(edgeWidth, 0, edgeWidth);
-        vertices[7] = new Vector3(edgeWidth, 0, 0);
+        vertices[3] = new Vector3(edgeWidth, edgeWidth, -edgeWidth);
+        vertices[4] = new Vector3(-edgeWidth, -edgeWidth, -edgeWidth);
+        vertices[5] = new Vector3(-edgeWidth, -edgeWidth, edgeWidth);
+        vertices[6] = new Vector3(edgeWidth, -edgeWidth, edgeWidth);
+        vertices[7] = new Vector3(edgeWidth, -edgeWidth, -edgeWidth);
 
         newMesh.vertices = vertices;
         newMesh.SetIndices(quads, MeshTopology.Quads, 0);
@@ -366,15 +376,17 @@ public class MeshGenerator : MonoBehaviour
         Vector3[] vertices = new Vector3[8];
         int[] quads = { 0, 1, 2, 3, 4, 7, 6, 5, 7, 4, 0, 3};
 
+        edgeWidth /= 2;
+
         //Vertices
-        vertices[0] = new Vector3(0, edgeWidth, 0);
-        vertices[1] = new Vector3(0, edgeWidth, edgeWidth);
+        vertices[0] = new Vector3(-edgeWidth, edgeWidth, -edgeWidth);
+        vertices[1] = new Vector3(-edgeWidth, edgeWidth, edgeWidth);
         vertices[2] = new Vector3(edgeWidth, edgeWidth, edgeWidth);
-        vertices[3] = new Vector3(edgeWidth, edgeWidth, 0);
-        vertices[4] = Vector3.zero;
-        vertices[5] = new Vector3(0, 0, edgeWidth);
-        vertices[6] = new Vector3(edgeWidth, 0, edgeWidth);
-        vertices[7] = new Vector3(edgeWidth, 0, 0);
+        vertices[3] = new Vector3(edgeWidth, edgeWidth, -edgeWidth);
+        vertices[4] = new Vector3(-edgeWidth, -edgeWidth, -edgeWidth);
+        vertices[5] = new Vector3(-edgeWidth, -edgeWidth, edgeWidth);
+        vertices[6] = new Vector3(edgeWidth, -edgeWidth, edgeWidth);
+        vertices[7] = new Vector3(edgeWidth, -edgeWidth, -edgeWidth);
 
         newMesh.vertices = vertices;
         newMesh.SetIndices(quads, MeshTopology.Quads, 0);
