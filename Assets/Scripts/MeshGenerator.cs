@@ -15,9 +15,13 @@ public class MeshGenerator : MonoBehaviour
     {
         m_mf = GetComponent<MeshFilter>();
 
+        /*
         mMesh = WrapNormalizePlaneQuads(1, 1, (kx, ky) => {
-            return new Vector3(kx, 0, ky);
-        });
+            return new Vector3(kx*10, 0, ky*10);
+        });*/
+        
+        mMesh = CreateCubeQuads(2f);
+        
         m_mf.sharedMesh = mMesh;
 
         mHmMesh = HalfEdgeMesh.fromVertexFace(mMesh.vertices, mMesh.GetIndices(0));
@@ -28,12 +32,12 @@ public class MeshGenerator : MonoBehaviour
 
     IEnumerator CoroutineCatmullClark()
     {
-        for (float i = 0; i < 10; i++)
+        for (float i = 0; i < 3; i++)
         {
             yield return new WaitForSeconds(3f);
             mHmMesh.Catmull_Clark();
             m_mf.sharedMesh = mHmMesh.ToMesh();
-            Debug.Log(MeshDisplayInfo.ExportMeshCSV(mHmMesh.edges));
+            //Debug.Log(MeshDisplayInfo.ExportMeshCSV(mHmMesh.edges));
         }
     }
 
@@ -297,6 +301,32 @@ public class MeshGenerator : MonoBehaviour
             quads[index++] = i * 2 + 2; 
             
         }
+
+        newMesh.vertices = vertices;
+        newMesh.SetIndices(quads, MeshTopology.Quads, 0);
+        newMesh.RecalculateBounds();
+        newMesh.RecalculateNormals();
+        return newMesh;
+    }
+
+    Mesh CreateCubeQuads(float edgeWidth)
+    {
+        Mesh newMesh = new Mesh();
+        newMesh.name = "CubeQuads";
+
+        //TODO : Trouver une façon de faire proprement
+        Vector3[] vertices = new Vector3[8];
+        int[] quads = { 0, 1, 2, 3, 2, 1, 5, 6, 4, 7, 6, 5, 7, 4, 0, 3, 3, 2, 6, 7, 4, 5, 1, 0 };
+
+        //Vertices
+        vertices[0] = Vector3.zero;
+        vertices[1] = new Vector3(0, 0, edgeWidth);
+        vertices[2] = new Vector3(edgeWidth, 0, edgeWidth);
+        vertices[3] = new Vector3(edgeWidth, 0, 0);
+        vertices[4] = new Vector3(0, -edgeWidth, 0);
+        vertices[5] = new Vector3(0, -edgeWidth, edgeWidth);
+        vertices[6] = new Vector3(edgeWidth, -edgeWidth, edgeWidth);
+        vertices[7] = new Vector3(edgeWidth, -edgeWidth, 0);
 
         newMesh.vertices = vertices;
         newMesh.SetIndices(quads, MeshTopology.Quads, 0);

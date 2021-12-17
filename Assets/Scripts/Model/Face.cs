@@ -6,6 +6,7 @@ public class Face
 
     public Face(int index, HalfEdge face)
     {
+        this.index = index;
         this.face = face;
     }
 

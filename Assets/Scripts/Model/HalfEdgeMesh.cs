@@ -8,7 +8,7 @@ using UnityEngine;
 
 class HalfEdgeMesh
 {
-    private static float COEFF = .8f;
+    private static float COEFF = .2f;
     private static bool KEEP_EDGES_IF_VALENCE_UNDER_3 = true;
 
 
@@ -45,6 +45,23 @@ class HalfEdgeMesh
         List<HalfEdge> copy = new List<HalfEdge>(edges);
         for (int i = 0; i < edges.Count; i++) if (copy.Contains(edges[i])) copy.Remove(edges[i].twinEdge);
         return copy;
+    }
+
+    //Fonction utilitaire pour régler tous les problèmes de twins
+    public void FixTwins()
+    {
+        Dictionary<KeyValuePair<int, int>, HalfEdge> twin = new Dictionary<KeyValuePair<int, int>, HalfEdge>();
+
+        foreach(var edge in edges)
+        {
+            KeyValuePair<int, int> path = new KeyValuePair<int, int>(edge.sourceVertex.index, edge.nextEdge.sourceVertex.index);
+            if (twin.ContainsKey(path))
+            {
+                edge.twinEdge = twin[path];
+                edge.twinEdge.twinEdge = edge;
+            }
+            else twin[new KeyValuePair<int, int>(path.Value, path.Key)] = edge; //Le twin aura le path inverse 
+        }
     }
 
 
@@ -266,8 +283,6 @@ class HalfEdgeMesh
 
         //Propriétés des edges
         Dictionary<HalfEdge, Vertex> edgePoints = new Dictionary<HalfEdge, Vertex>();
-        Dictionary<HalfEdge, Vector3> midPoints = new Dictionary<HalfEdge, Vector3>();
-
 
         int vertexIndice = vertices.Count;
 
@@ -305,18 +320,19 @@ class HalfEdgeMesh
                 vertices.Add(edgePoints[edge]);
             }
 
-            //Données liées au edge
-            midPoints[edge] = (edge.sourceVertex.vertex + edge.nextEdge.sourceVertex.vertex) / 2;
+        }
 
-            //On calcule les points liés à la vertice
-            if (!valenceOfPoint.ContainsKey(edge.sourceVertex)) //Si la vertice n'as pas déjà été traité
+        foreach(Vertex v in vertices)
+        {
+            //On actualise la vertice
+            if (!valenceOfPoint.ContainsKey(v)) //Si la vertice n'as pas déjà été traité
             {
                 //Calcul de la valence
-                List<HalfEdge> edgesOfVertice = FindAllEdgeUsingVertice(edge.sourceVertex);
+                List<HalfEdge> edgesOfVertice = FindAllEdgeUsingVertice(v);
                 List<Face> facesUsingVertice = edgesOfVertice.Select<HalfEdge, Face>(x => x.face).Distinct().ToList();
                 edgesOfVertice = filterTwinsFromList(edgesOfVertice);
-                int v = edgesOfVertice.Count;
-                valenceOfPoint[edge.sourceVertex] = v;
+                int valence = edgesOfVertice.Count;
+                valenceOfPoint[v] = valence;
 
                 //Calcul de la moyenne des midpoints
                 Vector3 avgOfMidpoints = new Vector3();
@@ -336,12 +352,15 @@ class HalfEdgeMesh
 
 
                 //On change la position
-                if(v > 3)
+                if (valence > 2)
                 {
-                    edge.sourceVertex.vertex = facePointAvg / v + 2 * avgOfMidpoints / v + (v - 3) / v * edge.sourceVertex.vertex;
+                    v.vertex = (facePointAvg + 2 * avgOfMidpoints + (valence - 3) * v.vertex) / valence;
+                }
+                else if (!KEEP_EDGES_IF_VALENCE_UNDER_3)
+                {
+                    v.vertex = (facePointAvg + 2 * avgOfMidpoints) / 3;
                 }
             }
-
         }
         
         //On Split les edges
@@ -359,13 +378,14 @@ class HalfEdgeMesh
         for (int i = 0; i < initialFaceCount; i++)
         {
             int nbEdge = nbEdgeInFace(faces[i]);
-            if (nbEdge > 4 && nbEdge % 2 == 0)
+            if (nbEdge % 2 == 0)
             {
                 SplitFace(faces[i], facePoints[faces[i]]);
             }
         }
-        
 
+        // Afin de corriger les bugs liés par exemple au splitFace
+        FixTwins();
     }
 
     public void SplitFace(Face f, Vertex v)
@@ -405,8 +425,8 @@ class HalfEdgeMesh
         // On crée des nouveaux liens en partant des oldEdges vers les facePoints
         foreach (HalfEdge edge in addedEdges)
         {
-            HalfEdge edgeToFacePt = new HalfEdge(edgesIndex++, edge.sourceVertex, edge.prevEdge, null, null, edge.face);
-            HalfEdge facePtToEdge = new HalfEdge(edgesIndex++, v, edgeToFacePt, edge.prevEdge.prevEdge, null, edge.face);
+            HalfEdge edgeToFacePt = new HalfEdge(edgesIndex++, edge.sourceVertex, edge.prevEdge, null, null, edge.prevEdge.face);
+            HalfEdge facePtToEdge = new HalfEdge(edgesIndex++, v, edgeToFacePt, edge.prevEdge.prevEdge, null, edge.prevEdge.face);
             edgeToFacePt.nextEdge = facePtToEdge;
 
             newEdges.Add(edgeToFacePt);
@@ -467,16 +487,69 @@ class HalfEdgeMesh
     #region
     public void displayGizmos()
     {
+        //Propriétés des faces
+        Dictionary<Face, Vertex> facePoints = new Dictionary<Face, Vertex>();
 
-        foreach(HalfEdge edge in edges)
+        GUIStyle faceStyle= new GUIStyle();
+        faceStyle.fontSize = 12;
+        faceStyle.normal.textColor = Color.cyan;
+
+        //On affiche les Face points
+        for (int i = 0; i < faces.Count; i++)
+        {
+            facePoints[faces[i]] = new Vertex(-1, FaceAverage(faces[i]));
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawSphere(facePoints[faces[i]].vertex, .01f);
+            Handles.Label(facePoints[faces[i]].vertex + new Vector3(0,0,.1f), "" + faces[i].index, faceStyle);
+        }
+
+        GUIStyle edgeStyle = new GUIStyle();
+        edgeStyle.fontSize = 12;
+        edgeStyle.normal.textColor = Color.blue;
+
+        foreach (HalfEdge edge in edges)
+        {
+            // On parcours les Edge et on affiche les edgePoints
+            Vector3 edgePoint = new Vector3();
+            Vector3 midPoint = (edge.sourceVertex.vertex + edge.nextEdge.sourceVertex.vertex) / 2;
+
+            // On addtionne les points des bords
+            edgePoint += edge.sourceVertex.vertex;
+            edgePoint += edge.nextEdge.sourceVertex.vertex;
+
+            //On additionne les points des faces points
+            edgePoint += facePoints[edge.face].vertex;
+            if (edge.twinEdge != null)
+            {
+                edgePoint += facePoints[edge.twinEdge.face].vertex;
+                edgePoint /= 4;
+            }
+            else
+            {
+                edgePoint /= 3;
+            }
+
+            Handles.Label(midPoint + facePoints[edge.face].vertex * 0.03f, ""+edge.index , edgeStyle);
+
+            Gizmos.color = Color.green;
+            Gizmos.DrawSphere(edgePoint, .01f);
+            Gizmos.DrawLine(edgePoint, edge.sourceVertex.vertex);
+            Gizmos.DrawLine(edgePoint, edge.nextEdge.sourceVertex.vertex);
+
+        }
+
+        GUIStyle m_Style = new GUIStyle();
+        m_Style.fontSize = 16;
+        m_Style.normal.textColor = Color.red;
+
+        foreach (HalfEdge edge in edges)
         {
             Gizmos.color = Color.blue;
-            Handles.Label((edge.sourceVertex.vertex + edge.nextEdge.sourceVertex.vertex + FaceAverage(edge.face)*.1f)/2.1f, ""+edge.index);
-            Gizmos.DrawLine(edge.sourceVertex.vertex, edge.nextEdge.sourceVertex.vertex);
+            Gizmos.DrawLine(edge.sourceVertex.vertex, edge.nextEdge.sourceVertex.vertex); 
 
             Gizmos.color = Color.red;
-            Gizmos.DrawSphere(edge.sourceVertex.vertex, .02f);
-            Handles.Label(edge.sourceVertex.vertex, ""+edge.sourceVertex.index);
+            Gizmos.DrawSphere(edge.sourceVertex.vertex, .01f);
+            Handles.Label(edge.sourceVertex.vertex + new Vector3(0,0,.03f), ""+edge.sourceVertex.index, m_Style);
         }
     }
     #endregion
