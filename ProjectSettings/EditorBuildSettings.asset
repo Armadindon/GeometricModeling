@@ -4,5 +4,8 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/MeshGenerationAndCatmullClark.unity
+    guid: 97627dac3985c7e43a11636e3a0efd9c
   m_configObjects: {}

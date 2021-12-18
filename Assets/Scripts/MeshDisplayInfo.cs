@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -156,9 +157,10 @@ public class MeshDisplayInfo : MonoBehaviour
         for(int i = 0; i < mesh.Count; i++)
         {
             HalfEdge edge = mesh[i];
-            strings.Add($"{edge.index}\t{edge.sourceVertex.vertex.x}\t{edge.sourceVertex.vertex.y}\t{edge.sourceVertex.vertex.z}\t{edge.prevEdge.index}\t{edge.nextEdge.index}\t{edge.twinEdge.index}\t{edge.face.face.index}");
+            strings.Add($"{edge.index}\t{edge.sourceVertex.vertex.x}\t{edge.sourceVertex.vertex.y}\t{edge.sourceVertex.vertex.z}\t{edge.prevEdge.index}\t{edge.nextEdge.index}\t{(edge.twinEdge != null? edge.twinEdge.index:-1)}\t{edge.face.face.index}");
         }
 
         return string.Join("\n", strings);
     }
 }
+#endif
