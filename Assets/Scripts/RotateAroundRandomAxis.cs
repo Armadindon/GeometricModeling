@@ -19,8 +19,13 @@ public class RotateAroundRandomAxis : MonoBehaviour {
 		m_Transform = GetComponent<Transform>();
 	}
 
-	// Use this for initialization
-	IEnumerator Start () {
+    private void OnEnable()
+    {
+		StartCoroutine(StartRotation());
+	}
+
+    // Use this for initialization
+    IEnumerator StartRotation () {
 		m_RotQuaternion = Quaternion.identity;
 
 		while(true)

@@ -18,7 +18,7 @@ public class OrientateRandom : MonoBehaviour {
 
 	// Use this for initialization
 	IEnumerator Start () {
-		m_StartOrientation =    m_Transform.rotation;
+		m_StartOrientation = m_Transform.rotation;
 		while (true)
 		{
 			Quaternion quaternionTarget = Quaternion.AngleAxis(Random.value * m_MaxAngle,m_Transform.TransformDirection(Random.insideUnitCircle.normalized)) *m_StartOrientation;
