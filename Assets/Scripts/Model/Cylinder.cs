@@ -15,10 +15,12 @@ public class Cylinder
         this.radius = radius;
     }
 
-    public static bool InterSegCylInf(Segment seg, Cylinder cyl, out Vector3 interPt1, out Vector3 interPt2, out Vector3 interNormal)
+    //public static bool InterSegCylInf(Segment seg, Cylinder cyl, out Vector3 interPt1, out Vector3 interPt2, out Vector3 interNormal)
+    public static bool InterSegCylInf(Segment seg, Cylinder cyl, out Vector3 interPt, out Vector3 interNormal)
     {
-        interPt1 = new Vector3();
-        interPt2 = new Vector3();
+        //interPt1 = new Vector3();
+        //interPt2 = new Vector3();
+        interPt = new Vector3();
         interNormal = new Vector3();
 
         Vector3 AB = seg.p2 - seg.p1;
@@ -31,24 +33,43 @@ public class Cylinder
 
         float delta = (b * b) - 4 * a * c;
 
-        float racine1;
-        float racine2;
-
         if (delta < 0)
         {
             return false;
         }
         else
         {
-            racine1 = (-b - Mathf.Sqrt(delta)) / 2 * a;
-            racine2 = (-b + Mathf.Sqrt(delta)) / 2 * a;
+            float racine1 = (-b - Mathf.Sqrt(delta)) / 2 * a;
+            float racine2 = (-b + Mathf.Sqrt(delta)) / 2 * a;
+
+            if (racine1 <= 0 || racine1 >= 1)
+            {
+                return false;
+            }
+            else
+            {
+                interPt = seg.p1 + racine1 * AB;
+                //interPt = (seg.p1 / 2) + racine1 * AB + seg.p2;
+                interNormal = interPt - cyl.pt1 + Vector3.Dot(interPt - cyl.pt1, PQ / PQ.magnitude) * PQ / PQ.magnitude;
+                interNormal.Normalize();
+            }
+
+            if (racine2 <= 0 || racine2 >= 1)
+            {
+                return false;
+            }
+            else
+            {
+                interPt = seg.p1 + racine2 * AB;
+                //interPt = (seg.p2 / 2) + racine2 * AB + seg.p1;
+                interNormal = -(interPt - cyl.pt1 + Vector3.Dot(interPt - cyl.pt1, PQ / PQ.magnitude) * PQ / PQ.magnitude);
+                interNormal.Normalize();
+            }
+
+            return true;
         }
 
-        float t1 = racine1;
-        float t2 = racine2;
-        interPt1 = (seg.p1 / 2) + t1 * AB + seg.p2;
-        interPt2 = (seg.p2 / 2) + t2 * AB + seg.p1;
-
         return true;
+
     }
 }
