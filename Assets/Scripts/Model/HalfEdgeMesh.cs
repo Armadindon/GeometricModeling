@@ -93,6 +93,22 @@ class HalfEdgeMesh
 
         return nb;
     }
+
+    //Méthode boite a outil, pas utilisé dans le programme principal
+    public bool isClosed()
+    {
+        return edges.All<HalfEdge>(e => e.twinEdge != null);
+    }
+
+    public int valence(Vertex v)
+    {
+        return filterTwinsFromList(FindAllEdgeUsingVertice(v)).Count;
+    }
+
+    public List<Face> ListFaceUsingVertice(Vertex v)
+    {
+        return FindAllEdgeUsingVertice(v).Select<HalfEdge, Face>(e => e.face).Distinct().ToList();
+    }
     #endregion
 
     /**
